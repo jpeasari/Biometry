@@ -1,0 +1,97 @@
+---
+title: "Biometry-01"
+author: "John"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+dir <- getwd()
+setwd(dir)
+```
+
+
+## Question 1: Barplot Construction
+```{r}
+
+#tinytex::install_tinytex()
+file = read.csv("limpets.csv") ## Loading the data set
+## tapply() is a function for each factor variable in a vector used to calculate mean
+file
+average = with(file,tapply(O2, list(SPECIES,SEAWATER),mean)) 
+
+column.order= c("50%","75%","100%") # Ordering 
+
+barplot(average[,column.order],ylim = c(0,14),beside = T,legend = T,
+        main = "Barplot Constructin for limpets data",xlab = "Seawater % ",
+        ylab = "Oxygen Concentration", col = c("red","green")) 
+```
+
+
+
+### QUestion 2
+
+```{r}
+data = read.csv("wing_light_tran.csv")
+attach(data)
+summary(data)
+```
+### Hypothesis
+
+### Ho: Bees in the north side of the city have lighter wings than those in the south side
+### Ha: Bees in the north side of the city doesn't have lighter wings than those in the south side
+
+Step 1: Seperating the data into two categories based on north_side and South_Side
+
+```{r}
+south_side = data[data$ï..Population == "stl.city.south",]
+north_side = data[data$ï..Population == "stl.city.north",]
+```
+
+## Performing Shipiro Test on South_side and North_side
+Here, by performing shipiro test, I can examine if a variable is normally distributed in the dataset.
+Ho: Normal data
+Ha: Not normal data
+
+```{r}
+shapiro.test(south_side$wing.translucent)
+```
+```{r}
+shapiro.test(north_side$wing.translucent)
+```
+ Results for the shapiro test indicates that, p value for the north_side is much higher compared to south_side which is 0.3514 and 0.06689 and we accep the NULL hypothesis as the p values are greater than 0.05 and another conclusion is that, the data is normally distributed.
+ 
+### F-test for variances
+Ho: Equal Variences
+Ho: Unequal Varienes
+
+```{r}
+var.test(north_side$wing.translucent,south_side$wing.translucent)
+```
+Here, f test revels that both the variances are not equal and we reject the NULL hypothesis. The north_side has 0.37 and south_side has 2.42. 
+
+### Choosing type of test
+Using 2-sample Wilcoxon test, a non parametric test which is alternative to the t test
+
+```{r}
+wilcox.test(north_side$wing.translucent,south_side$wing.translucent, paired=T)
+```
+Here, we accept the NULL hypothesis as the p value is greater that 0.05, that is 0.59..
+
+### Question 3
+The paper titled "The Effect of Hurricane Hugo on Six Invertebrate Species in the
+Luquillo Experimental Forest of Puerto Ricol " used paired t-test in their study as the data is logocally paired. They used same data 40 before and after hurricane. They also performed Chisquare Goodness of Fit Tests to compare observed and spatial distributions and also used G test to compare spatial distributions alone.
+
+
+no of cells correlartes to that 
+large pores less dense
+
+
+
+ 
+ 
