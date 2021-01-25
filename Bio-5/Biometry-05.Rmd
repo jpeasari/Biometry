@@ -1,0 +1,90 @@
+---
+title: "Biometry-05"
+author: "John Reddy Peasari"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Setting working directory
+
+```{r}
+dir <- getwd()
+setwd(dir)
+```
+
+## Loading and analyzing the data
+
+```{r}
+data = read.csv("CRBD.csv")
+
+```
+
+```{r include=FALSE}
+attach(data)
+summary(data)
+str(data)
+```
+
+
+```{r include=FALSE}
+library(ggpubr)
+```
+
+```{r}
+ggboxplot(data, x = "cage", y = "irradiance", color = "treatment",
+          palette = c("#00AFBB", "#E7B800","#00bb80","#bb7a00"))
+```
+After plotting the data table values using ggboxplot, it can be inferred that the surface irradiance of insects's cuticle is higher in the control treatment when compared to other treatments and methanol has the least irradiance effect on the insect's cuticle. Isopropyl and ethanol has intermediate effect.
+
+For making quantitative decisions about a experiment, we have to conduct a suitable statistical test.
+
+### Regular ANOVA
+
+Here, first we will conduct a regular factorial ANOVA considering both "cage" and "treatment" as fixed factors. The response variable is "irradiance" which is numerical in nature and the other two factors are catogorical. THe designed is completely balanced with equal number of observations in each column. There are no missing values or cells.
+
+
+```{r}
+CRBD.anova <- aov(irradiance~treatment,data=data)
+summary(CRBD.anova)
+
+```
+Here, we are conducting simple one way anova ignoring the cage factor. Eventhough, the ANOVA results show significant differences among treatments. But, this is a innappropriate method to consider (from biometry lab). Here I just want to show the differences between one way, two way interaction anova and randomized block design anova.
+
+### Two way Model I ANOVA
+Here, we can do two way model 1 ANOVA with "irradiance" as a response variable and "cage", and "treatment" as fixed effect. Since both the factors are fixed our interaction becomes fixed. Hence, model I is the appropriate method. The second variable is also reported as a variable of interest. But, the results are much different from the regular two way anova and both are inappropriate (from biometry lab). 
+```{r}
+CRBD.factorial.anova = lm(irradiance~treatment*cage,data)
+anova(CRBD.factorial.anova)
+```
+If we put an interaction term in this model however, lm will fit it but the results from anova will be useless.
+
+It is interesting to note residuals degrees of freedom and sum of squares values.The model we just fitted is called a saturated model—there are zero degrees of freedom left over after fitting the three terms. All the degrees of freedoms are taken by the interaction term leaving 0 for residuals. We can’t calculate an error sum of squares, which means we can’t calculate mean squares or F-ratios. This demonstrates that there really is no way to estimate an interaction in ANOVA when there is no replication at the level of each combination of factor levels.
+
+
+
+### Randomized Block Design
+
+Next, we will perform complete randamized block design using "cage" as the blocking factor. We are not interested in the type of block. Our ultimate objective is to study the effect of different alchol treatment on insect's cuticle irradiance. Even though there is an effect due to cage, we completely ignore that particular effect. We are not really interested which block is better. Block is the error control mechanism.
+
+The Completely Randomized Design (CRD) is best to use when we have homogeneous experimental units.The process of analysing an RCBD is essentially the same as any other type of ANOVA. First we fit the model using the lm function and then we use anova to calculate F-statistics, degrees of freedom, and p-values.
+```{r}
+CRBD.block.anova = aov(irradiance~treatment + Error(cage), data = data)
+summary(CRBD.block.anova)
+```
+Here are the results of the significance test using the correct ANOVA model for our randomized block experiment. The residuals in the first part are due to the cage factor (blocking factor). The anova table gave a p value (3.44e-15) and F ratio (64.61), which indicates that the treatment is highly significant on the response factor "irradiance". As there is only one variable(treatment) it is not be possible to perform pair wise comparisions.
+
+
+#### Conclusions
+
+In conclusion, in both factorial anova and randomized block design the "treatment" factor has same degrees of freedom,sum of squares and mean squares.But, this similariy is irrelevant. The differences I found are p values and F values. In two way factorial anova, I don't find any F statistics and p value. Whereas, randomized block design succuesfully resulted in F ratio and p value. The main difference arised is due to the blocking factor (cage). In blockdesign, a set of experimental units is grouped (blocked) in a way that minimizes the variability among the units within groups (blocks). In two way factorial anova we cannot infer anything about significant differences. But, the randomized blok design shows highly significant diferences between various alcohol tretments on the insect's cuticle and the response variable 'irradiance'.
+
+
+
+
+
+
