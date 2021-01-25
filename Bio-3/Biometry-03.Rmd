@@ -1,0 +1,267 @@
+---
+title: "Biometry-03"
+author: "John Reddy Peasari"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Setting directory
+```{r}
+dir <- getwd()
+setwd(dir)
+```
+
+# Problem 1
+## Loading the data
+```{r}
+data = read.csv("h5p1.csv")
+data$DENSITY <- factor(data$DENSITY,levels = c(8,15,30,45),labels = c("8","15","30","45"))
+#summary(data)
+str(data)
+levels(data$SEASON)
+levels(data$DENSITY)
+```
+The problem is about that density of adults limpets within enclosures (8, 15, 30 and 45 individuals per enclosure) during two seasons (winter and summer) so as to investigate the effects of adult density and season on egg mass production by intertidal limpets. Three replicate enclosures per density/season combination were used. Here,both
+density and season were considered fixed factors.So, the interaction will be fixed too. EGGS is the response variable and factors are DENSITY and SEASON.
+
+
+
+```{r}
+# Box plot with two factor variables
+boxplot(data$EGGS ~ data$SEASON * data$DENSITY, data=data, frame = T, col = c("#00AFBB", "#E7B800"), ylab="mass of eggs",xlab = "Density of limpets in each cage")
+```
+
+The design is completely balanced. There are three replicate enclosures for each of the four densities and two seasons.No evidence of non-normality (boxplots not wildly asymmetrical) and no apparent relationship between mean and variance (heights of boxplots increase up the y-axis).
+
+
+
+
+
+## Assumptions of the problem
+# H01: There is no difference in the means of factor DENSITY
+# H01: There is no difference in the means of factor SEASON
+# H01: There is no interaction between factors DENSITY and  SEASON
+
+
+# Ha1: There is a difference in the means of factor DENSITY
+# Ha1: There is a difference in the means of factor SEASON
+# Ha1: There is an interaction between factors DENSITY and  SEASON
+
+Two-way ANOVA test is used to evaluate simultaneously the effect of two or more grouping variables (A and B) on a response variable.The grouping variables are also known as factors. The different categories (groups) of a factor are called levels. The number of levels can vary between factors. The level combinations of factors are called cell.Here, factors are DENSITY and SEASON and response variable is EGGS. Each factor has levels. Density has 4 levels and SEASON has two levels.
+When the sample sizes within cells are equal, we have the so-called balanced design. In this case the standard two-way ANOVA test can be applied. As the data contains two fixed factors, each with multiple levels, a Model I two-way ANOVA seems to be the most appropriate test to conduct.
+
+
+```{r}
+# With Interaction effect
+# Performing ANOVA
+h5p1.2way.aov_model2 = aov(data$EGGS~data$DENSITY*data$SEASON)
+summary(h5p1.2way.aov_model2)
+```
+
+# Checking the assumptions
+## Normality
+### Ho: Normal data
+### Ha: Not normal data
+```{r}
+res = h5p1.2way.aov_model2$residuals ### Extracting residuals 
+
+plot(h5p1.2way.aov_model2, 2)
+shapiro.test(h5p1.2way.aov_model2$residuals) 
+
+```
+Q-Q plot clearly revels that, almost all the data points are lying on the diagonal line indicating the data normality. The Shapiro test gives p values of 0.2514, suggesting that the distribution of the data are not significantly different from the normal distribution. We assume normality.
+
+
+# Homogeneity of Variance
+## Ho: Equal variences
+## Ha: Unequal variences
+```{r}
+plot(h5p1.2way.aov_model2, 1)
+library(car)
+leveneTest(EGGS~DENSITY*SEASON, data = data)
+
+```
+Levenes test revaled that, the variecnes are not equal. The p value is less than the threshold. Hence, we fail to accept the NULL hypothesis, which suggests non-equal variences.
+
+### Data transformation on the response variable 
+Data is transformed and checked the assumptions again
+
+```{r}
+h5p1.2way.aov.model2_log = aov(log10(data$EGGS)~data$DENSITY*data$SEASON)
+summary(h5p1.2way.aov.model2_log)
+```
+
+
+
+```{r}
+shapiro.test(h5p1.2way.aov.model2_log$residuals)
+#plot(h5p1.2way.aov.model2_log, 2)
+
+plot(h5p1.2way.aov.model2_log, 1)
+library(car)
+leveneTest(log10(EGGS)~DENSITY*SEASON, data = data)
+```
+Although, the data is meeting the normality assumption but, levenes test fails to accept the NULL hypothesis.
+The p value in the levenes test is 0.0007194. I tried transforming the data even with log2,cube root.But, the results looks the same.
+
+
+Note that, if the above assumptions are not met there are a non-parametric alternative (Kruskal-Wallis test) to the one-way ANOVA.
+
+Unfortunately, there are no non-parametric alternatives to the two-way and the three-way ANOVA after surveying carefully online. Thus, in the situation where the assumptions are not met, you could consider running the two-way/three-way ANOVA on the transformed and non-transformed data to see if there are any meaningful differences.
+Variance failed for one of the groups after log transformation, to my knowledge there is no real parametric alternative to a 2-way anova, so I continued using the anova stating that due to the sample size as well as the normality assumption holding as well as the variance assumption for one of the groups holding, an anova still has enough statistical power
+
+```{r}
+summary(h5p1.2way.aov_model2)
+summary(h5p1.2way.aov.model2_log)
+
+pf(69.94,1,3,lower.tail=F)
+1 - pf(4.66,1,3,lower.tail=F)
+```
+
+## Conclusions
+
+As the sample size is fairly enough large, I performed a comparison of the the ANOVA results non transformed data and on the transformed data to see if they showed any meaningful differences, which they did showed ststistical differences.
+Anova on the non transforned data revealed that, there are no significant differences in the treatment and the main effects. However, after the data transformation it was observed that there was a statistical differences iin the tretment effect but not in main effects.
+
+From the ANOVA results, you can conclude the following, based on the p-values and a significance level of 0.05:
+1.The p-value of DENSITY is  2e-16 (significant), which indicates that the levels of DENSITY are associated with significant different (EGGS) production.
+2.The p-value of SEASON is  2e-16 (significant), which indicates that the levels of dose are associated with significant different (EGGS) production.
+3.The p-value for the interaction between DENSITY*SEASON is 0.00388 (significant), which indicates that the relationships between DENSITY and SEASON depends on the EGGS.
+
+```{r}
+geg.matrix <- data.matrix(data)
+friedman.test(geg.matrix)
+```
+
+
+
+
+In ANOVA test, a significant p-value indicates that some of the group means are different, but we don’t know which pairs of groups are different.
+
+It’s possible to perform multiple pairwise-comparison, to determine if the mean difference between specific pairs of group are statistically significant.TO determine the specific significant differences between the factors and the levels, I used Tukey-Kramer Honest significant difference test on the log tranasformed data.
+
+```{r}
+TukeyHSD(h5p1.2way.aov.model2_log)
+
+```
+
+Tukey Conclusions:
+TUkey test relvealed significant different among the groups of levels. As the anova revealed that there are significant diffrences on tretment ( DENSITY and SEASON),except spring-8:spring,summer-8:spring, summer-15:spring, spring-30:spring,summer-45:spring,s and mmer-30:summer rest all the pariwise comparisions showed statistical significant differences. It can be concluded that, although there are significant differences showed on transformed data but the affect of season [spring or summer] on limpet fecundity as a function of intraspecific competition (measured in limpet density) placed cages with varying limpet density cannot be accurately inferred from the present dataset because, all the assumptions failed to statisfy the ststistical hypothesis.
+
+```{r}
+
+```
+
+# Problem: 2
+
+```{r}
+data2 = read.csv("h5.p2.csv")
+str(data2)
+summary(data2)
+
+library("ggpubr")
+boxplot(data2$productivity ~ data2$Greenhouse * data2$Soil.mix, data=data2, frame = T, col = c("#00AFBB", "#E7B800"), ylab="Productivity",xlab = "Oreintation and soil mixture")
+```
+
+Productivity (the response variable) is a float point value, while the factors are Soil.mix and Greenhouse. Which in turn  are fixed factors. (They are both controlled by the experimenter and can be replicated.)
+The design is balanced, with equal numbers for each crossing.
+
+
+## Assumptions of the problem
+# H01: There is no difference in the means of factor Greenhouse
+# H01: There is no difference in the means of factor Soil.mix
+# H01: There is no interaction between factors Greenhouse and  
+
+
+# Ha1: There is a difference in the means of factor Greenhouse
+# Ha1: There is a difference in the means of factor Soil.mix
+# Ha1: There is an interaction between factors Greenhouse and  Soil.mix
+
+
+
+
+```{r}
+h5.p2.2way.aov_model1 <- aov(productivity~Greenhouse*Soil.mix,data = data2)
+summary(h5.p2.2way.aov_model1)
+```
+
+
+```{r}
+res = h5.p2.2way.aov_model1$residuals
+
+shapiro.test(h5.p2.2way.aov_model1$residuals)
+plot(h5.p2.2way.aov_model1, 2)
+
+### Test for variences
+
+leveneTest(productivity~Greenhouse*Soil.mix, data = data2)
+plot(h5.p2.2way.aov_model1, 1)
+
+```
+
+## Data transform
+```{r}
+h5.p2.2way.aov_model1_log <- aov(log10(productivity)~Greenhouse*Soil.mix,data = data2)
+summary(h5.p2.2way.aov_model1_log)
+```
+
+
+```{r}
+res = h5.p2.2way.aov_model1_log$residuals
+shapiro.test(h5.p2.2way.aov_model1_log$residuals)
+plot(h5.p2.2way.aov_model1_log, 2)
+
+leveneTest(log10(productivity)~Greenhouse*Soil.mix, data = data2)
+plot(h5.p2.2way.aov_model1_log, 1)
+
+```
+Here, on both transformed and non transformed data Shapiro and levenes test failed to accept the NULL hypotheis. For the non tranformed data, shipiro test showed p value as 0.0006152 and levens test showed p value as 0.01131. On the transformed data, Shapiro test and levens test showed p value as  0.003909 and 0.000718.
+
+```{r}
+summary(h5.p2.2way.aov_model1)
+
+summary(h5.p2.2way.aov_model1_log)
+
+```
+# Consluson:
+ANOVA results on both transformed and non transformed data reveal same conclusions, there are not significant differences in the treatment and main effects. Main effect and treatment effect showed no statistical significant differences. The affect of soil amendments and greenhouse orientation on tomato plant production cannot be accurately inferred due to not meeting satistical assumptions even after the data transformation.
+
+
+
+
+###  Problem 3:
+
+
+The authors  used four fenced exclosures of one-year and two within four-year burned watersheds that had been previously used to determine the effect of bison grazing on plant community structure. The authors  used these as “paired” samples. In this way, they eventully had four conditions available to gather their data: annually burned and ungrazed,  annually burned and grazed, burned every four years and ungrazed, and  burned every four years and grazed.For these analyses data from the 12 small (0.25-m2) plots within a sampling unit, mean was calculated (except for PD and resource variability) and log-transformed when necessary to improve normality and homogeneity of variances. Their results show that grazing and annual burning had opposite effects on small-scale (0.25-m2) plant community
+structure.
+           
+The researchers employed mixed model ANOVA with the metrics of community structure and heterogeneity, resource availability,and the CVs for N and light availability as response variables, they had used this model as they treat the distance between the units was sufficient to ensure “independence with respect to responses to burning and grazing”, and the block design is  a random nested factor.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+```
+
+
+
+```{r}
+
+```
+
