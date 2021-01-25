@@ -1,1 +1,1 @@
-# 2 way anova
+# Model 1 two  way anova
