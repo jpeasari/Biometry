@@ -5,8 +5,8 @@ each and why would you must take their differences into account when designing a
 (No need to fallow format for this question.)
 
 Problem 2. a. Determine if adding different sugars to the growth media in Drosophila has an
-effect in the development of ocular units. b. Provide the mean treatment effect that each factor
-level has, ie, individual ái’s. What can you conclude from that information?
+effect in the development of ocular units. 
+b. Provide the mean treatment effect that each factor level has, ie, individual ái’s. What can you conclude from that information?
 
 Problem 3. The Australian brown tree snake was introduced in Guam and has cause the
 extinction of two native birds. This snake seems to reproduce more often and less seasonally than
