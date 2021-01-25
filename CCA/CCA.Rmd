@@ -1,0 +1,134 @@
+---
+title: "Canonical Correlation Analysis- CCA"
+author: "John Reddy Peasari"
+date: "5/1/2020"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Question: A survey is conducted among the 600 college senior students to see if there is any realationship between four different acedemic variables (test scores) and three psychological variables. Here, they are more intersted in the number of dimensions (canonical variates) required to understand the relationship between the two sets of variables
+
+```{r include=FALSE}
+setwd("D:/Spring 2020/Biometry/Project")
+```
+
+```{r include=FALSE}
+library("CCA")
+library("CCP")
+```
+### Loading the data
+```{r}
+
+data = read.csv("CCA.csv")
+head(data)
+colnames(data) <- c("Control", "Concept", "Motivation", "Read", "Write", "Math","Science", "Sex")
+```
+
+It can be obsserved that, the dataset has 8 columns, first three columns are realted to psychological variables and the last four columns are realted to the academic variables. Now, in order to perform canoniacl correaltion analysis we have to split the data into two datatables where one has set of predictor variables and the other has outcome variables.
+```{r}
+psych_var <- data[, 1:3]
+acad_var <- data[, 4:8]
+head(psych_var)
+head(acad_var)
+```
+
+```{r}
+## Understanding correlations within and between two variables
+correl <- matcor(psych_var, acad_var)
+correl
+```
+THe function "matcor" is ued to understand correlations and displays all the correlations within X variable and Y variable and between X and Y as cross correlation.
+
+```{r}
+img.matcor(correl, type = 2)
+```
+Correlation matrices for psychological variables (upper-left), academic variables (upper-right) and the bottom middle figure shows cross-correlation between psychological and academic variables. The strength of correaltion depends up on the intensity of the colour in the coloured bar from blue (negative correlation) to red (positive correlation). It looks like the observations between psychological and academic variables are not much correalated. Let us examine the real relationship by performing canoniacl correlation analysis using a package "CCA".
+
+```{r}
+## Displaying the canonical correlation coefficients
+CC1 <- cc(psych_var,acad_var)
+CC1$cor
+```
+Here, the value [0.4640861 0.1675092 0.1039911] are called canonical correlation coefficients or canonical variates. As our smallest data table is the psychological set that has only three observations (control,concept and motivation). So, the number of varaites will be equal to the number of observations in the smallest data table. Hence, there will be three canonical caorrelation coefficients. 
+```{r}
+## Displaying raw canonical coeffients
+CC1[3:4]
+```
+Above displayed values are the raw canonical coefficients, which will define the linear realtionship between the variables in a given set and canonical variets.
+
+These raw canonical values are initially used for finding the linear combination of observations within each set for three times (i.e.,) to calculate each canonical varaite. These values are similar to regression coefficients.
+```{r}
+## Calculating canonial loadings
+CC2 <- comput(psych_var,acad_var, CC1)
+## Displaying canonical loadings
+CC2[3:6]
+```
+Next, canonical loadings of the observation/variables on the precalculated canonical domensions (variates). These values are the correlations between the canonical variates and the variables.
+
+```{r}
+## Testing Canonical variates or canonical dimensions
+rho <- CC1$cor
+## Define all parameters for the p.asym function to compute
+N <- dim(psych_var)[1]
+p <- length(psych_var)
+q <- length(acad_var)
+## Calculate p-values with the help of F approximations using various test statistics
+# p.asym(rho,N,p,q,tstat="Wilks")
+
+res1 <- p.asym(rho,N,p,q,tstat="Wilks")
+
+plt.asym(res1,rhostart=1) 
+plt.asym(res1,rhostart=2)
+plt.asym(res1,rhostart=3)
+```
+
+
+```{r}
+p.asym(rho,N,p,q,tstat="Hotelling")
+
+```
+
+
+```{r}
+p.asym(rho,N,p,q,tstat="Pillai")
+```
+
+
+```{r}
+p.asym(rho,N,p,q,tstat="Roy")
+```
+Result table analysis for test statistic
+
+### Stat: Gives the value of statistic i.e., it can be Wilks, Hottling, Pillai or Roy.
+### approx: Gives corresponding F - approximation for each significant statistic test.
+### df1: Numerator degrees of freedom for the F - approximation
+### df2: Denominator degrees of freedom for the F - approximation
+### p value: p-value
+
+Next, we use p.asym function that can calculate F approximations and p value for each test statisic (Wilks, Hotelling, Pillai and Roy). It can be observed that all the test statistics (expect Roy) displayed same p-value for each canonical variate. The first test of every significant test (dimension) determine whether all the dimensions are significant or not (observed F value ~ 11.72) and followed by 2 and 3 dimensions combined (observed F value ~ 2.9 ) and finally dimension is tested itself whether is significant or not (observed F value ~ 2.16)
+
+Test of dimensionlity can be inferred from test statistics results. Out of three dimensions ony two are satistically significant with a p value of 0 and 0.002 at a threshold p value of 0.05 in all the test statistics at correlations 0.46 and 0.16.
+```{r}
+## Displaying standardized psycological variables (psych_var) canonical coefficients diagonal matrix
+STD1 <- diag(sqrt(diag(cov(psych_var))))
+STD1 %*% CC1$xcoef
+```
+
+
+```{r}
+## Displaying standardized academic variables (acad_var) canonical coefficients diagonal matrixjr
+STD2 <- diag(sqrt(diag(cov(acad_var))))
+STD2 %*% CC1$ycoef
+```
+
+Computing standardized coefficients helps in evaluating comparions among the variables easily. As the third canonical dimension is not significant we only consider one and two dimensions. First standardized matrix indicates psycological variables and the second matrix indicates academic variables. It can be inferrend from the above results that, locus of control (-0.84)(in psycological table ) influenced first canonical dimension mostly. Similarly, for motivation (0.69) and seld-concept (-0.84).
+
+In case of academic variables, writing (-0.35), reading (-0.45) and gender (-0.32) influenced first dimension. Whereas, dominating variables in the second dimension are writing gender (0.54), Sciecne (-0.83) and writing (0.41).
+ 
+
+
