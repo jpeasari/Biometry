@@ -1,0 +1,476 @@
+---
+title: "Biometry-02"
+author: "John Reddy Peasari"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+dir <- getwd()
+setwd(dir)
+```
+
+### Question 1:
+Factors can either be fixed or random,the type depends on the context of the problems, the questions of interest and how the data is gathered.
+A factor is fixed defined, when the levels under study are the only levels of interest of the sudy.The fixed variable is the one that is assumed to be measured without error.
+A factor is random variable when the levels under study are a random sample from a larger population. 
+
+Fixed effect: Comparision of effects of three specific dosages of a drug on the respnse. Here "Dosage" is the factor and specific dosages are the levels.
+
+Random effect:A manufacturer of widgets is intrested in studying the effect of machine operator on final product quality.They take random operators from large number of operators of widgets.Here, the factor is "Operator".
+Correctly, specifying the fixed and random factors of the model is vital to obtain accurate analyses an experiment desin.
+
+
+
+### Question 2
+```{r}
+setwd("D:/Spring 2020/Biometry/Assignments/Homework_02")
+sugar = read.csv("sugar.csv") 
+attach(sugar)
+summary(sugar) # The spaces on the ocular micrometer are called ocular units
+#mutate(ocular_units = factor(ocular_units, ordered = TRUE))
+#glimpse(data)
+levels(sugar$sugar_treatment) ## Checking number of levels in sugar treatment, three variables
+
+```
+### Hypothesis Testing
+### H(NULL): Means of all the groups are the same
+### H(Alternate): THere is atleast one significant difference among means
+
+```{r}
+xbar <- tapply(ocular_units,sugar_treatment,mean)
+s <- tapply(ocular_units,sugar_treatment, sd)
+n <- tapply(ocular_units,sugar_treatment,length)
+sem <- s/sqrt(n)
+```
+```{r}
+stripchart(ocular_units ~ sugar_treatment, vertical = T, pch = 19, data=sugar,xlab = "Sugar Treatment", ylab = "Ocular Units", method = "jitter", jitter = 0.004)
+arrows(1:5,xbar+sem,1:5,xbar-sem,angle=90,code=3,length=.1)
+lines(1:5,xbar,pch=4,type="b",cex=2)
+```
+By looking at the plots, it can be analyzed that,2% sucrose alone leads to the maximum ocular units than the combination of carbohydrate concentrations.
+
+```{r}
+xval<-barplot(xbar,ylim=c(0,85), xlab = "Sugar Treatment Type", ylab = "Ocular Units")
+arrows(xval,xbar+sem,xval,xbar-sem,angle=90,code=3,length=.1)    
+```
+
+
+```{r}
+library(ggplot2)
+ggplot(sugar, aes(x = sugar_treatment, y = ocular_units, fill = sugar_treatment)) + geom_boxplot() + geom_jitter(shape = 15,color = "steelblue",position = position_jitter(0.21)) + theme_classic()
+```
+
+
+
+
+### Performing ANOVA test on the data
+### Performing ANOVA, because we have more than 2 sample
+```{r}
+rcf.lm<-lm(ocular_units~sugar_treatment)
+one.way.anova = anova(rcf.lm)
+one.way.anova
+
+anova_one_way1 <- aov(sugar$ocular_units~sugar$sugar_treatment)
+anova_one_way1
+
+
+```
+From the initial anova test on the data, it can be observed that the p-value is much lower than the threshold p = 0.05. So that, it can be concluded that there is a significant difference between different sugar_tretments which is indicated by "*". We reject NULL and accpet alternative hypothesis.
+```{r}
+### Extracting residual values from the ANOVA test
+res = anova_one_way1$residuals
+```
+# Diagnostics
+ 
+```{r}
+qqnorm(rcf.lm$residuals)
+opar<-par(mfrow=c(2,2), mex=0.6,
+mar=c(4,4,3,2)+0.3)
+plot(rcf.lm, which=1:4)
+par(opar)
+```
+ 
+### Testing Normality
+### Ho: Data is normally distributed
+### Ha: Data is not normally distributed
+```{r}
+shapiro.test(anova_one_way1$residuals)
+```
+Here, the NULL hypothesis is accepted as the p value is greater than o.o5.
+### Testing for homogeneity of variences
+### Using Bartlett's test
+### H0: Variances are equal
+### Ha: Variances are unequal
+```{r}
+bartlett.test(anova_one_way1$residuals~sugar_treatment)
+```
+Here, in bartlett test it is observed that the p value is smaller compared to threshold (0.05). Hence, we reject the NULL hypothesis and accpet the alternative hypothesis.Variances are not equal.
+
+
+
+### As the bartlett failed to accpet the NULL hypothesis, we now log tranform the initial data.
+
+### Log transforming:
+
+```{r}
+rcf.lm_transform <-lm(log10(ocular_units+1)~sugar_treatment)
+one.way.anova_log_transform = anova(rcf.lm_transform)
+one.way.anova_log_transform
+
+anova_one_way1_transform <- aov(log10(ocular_units+1)~sugar_treatment)
+anova_one_way1_transform
+```
+
+### Retrieving residuals from the transformed data
+```{r}
+res_transform = anova_one_way1_transform$residuals
+
+# Diagnostics plots
+qqnorm(anova_one_way1_transform$residuals)
+opar<-par(mfrow=c(2,2), mex=0.6,
+mar=c(4,4,3,2)+0.3)
+plot(rcf.lm, which=1:4)
+par(opar)
+
+
+
+```
+### Testing for the normality and the variances on the log() transformed data
+```{r}
+shapiro.test(anova_one_way1_transform$residuals)
+
+bartlett.test(anova_one_way1_transform$residuals~sugar$sugar_treatment)
+
+```
+In both the cases, p value is higher compared to threshold. Hence, we accept the NULL hypothesis.
+
+```{r}
+# Pairwise comparison
+# The one-way ANOVA test does not inform which group has a different mean. Instead, you can
+# perform a Tukey test with the function TukeyHSD()
+
+TukeyHSD(anova_one_way1)
+
+TukeyHSD(anova_one_way1_transform)
+
+boxplot(TukeyHSD(anova_one_way1))
+
+boxplot(TukeyHSD(anova_one_way1_transform))
+
+
+```
+Looking at the last column, the significant differences to be reported in the present test is between the means of the groups : For non transformed data and transformed data showed similar p values
+2%.sucrose-1%gluc.1%fruct
+control-1%gluc.1%fruct
+2%.sucrose-2%.fructose
+control-2%.fructose
+2%.sucrose-2%.glucose
+control-2%.glucose
+control-2%.sucrose
+
+Conclusion: From the above data, sugar meadia led to fewer ocular effects and Fructose had the highest effect on ocular units than glucose
+
+
+```{r}
+stripchart(anova_one_way1$residuals~sugar$sugar_treatment, method = "jitter")
+
+stripchart(anova_one_way1_transform$residuals~sugar$sugar_treatment, method = "jitter")
+
+```
+
+
+
+
+##### Question 3:
+### Hypothesis testing
+# Ho: All the means are same accross the groups
+# Ha: Atleast one difference betweeen the groups
+
+```{r}
+setwd("D:/Spring 2020/Biometry/Assignments/Homework_02")
+snake = read.csv("snake.csv") 
+attach(snake)
+summary(snake) 
+levels(snake$Population) 
+```
+
+```{r}
+xbar <- tapply(Fat_g,Population,mean)
+s <- tapply(Fat_g,Population, sd)
+n <- tapply(Fat_g,Population,length)
+sem <- s/sqrt(n)
+
+
+stripchart(Fat_g ~ Population, vertical = T, pch = 19, data=snake,xlab = "Sugar Treatment", ylab = "Ocular Units", method = "jitter", jitter = 0.004)
+arrows(1:5,xbar+sem,1:5,xbar-sem,angle=90,code=3,length=.1)
+lines(1:5,xbar,pch=4,type="b",cex=2)
+
+xval<-barplot(xbar,ylim=c(0,85), xlab = "Sugar Treatment Type", ylab = "Ocular Units")
+arrows(xval,xbar+sem,xval,xbar-sem,angle=90,code=3,length=.1)       
+
+
+
+library(ggplot2)
+ggplot(snake, aes(x = Population, y = Fat_g, fill = Population)) + geom_boxplot() + geom_jitter(shape = 15,color = "steelblue",position = position_jitter(0.21)) + theme_classic()
+```
+### Performing ANOVA test on the data
+### But, the only practical issue in one-way ANOVA is that very unequal sample sizes can affect the homogeneity of variance assumption
+```{r}
+rcf.lm.snake<-lm(Fat_g ~ Population)
+one.way.anova_snake = anova(rcf.lm.snake)
+one.way.anova_snake
+
+anova_one_way1_snake <- aov(snake$Fat_g~snake$Population)
+anova_one_way1_snake
+
+res_snake = anova_one_way1_snake$residuals
+
+```
+### Testing normality
+### Here, I use Kolmogorov-Smirnov test and not shapiro, as samples are uneven in number
+# The Kolmogorov-Smirnov test examines if scores are likely to follow some distribution in some population.
+# Ho: Normal distribution 
+# Ha : Not normal distribution
+```{r}
+snake_ks = ks.test(Population,Fat_g)
+snake_ks
+
+```
+### Bartlett - Variances testing
+```{r}
+bartlett.test(Fat_g~Population)
+
+```
+In  Kolmogorov-Smirnov test and Bartlett test, as the p value is much lower compared to (p=0.05), we reject the NULL hypothesis. Hence, samples are not drawn from the sample population and variences are not equal.
+
+
+### Transforming data,performing ANOVA and testing assumptions
+
+```{r}
+rcf.lm.snake_transform<-lm(log10(Fat_g+1) ~ Population)
+one.way.anova_snake_transform = anova(rcf.lm.snake_transform)
+one.way.anova_snake_transform
+
+anova_one_way1_snake_transform <- aov(log10(Fat_g+1)~Population)
+anova_one_way1_snake_transform
+
+res_snake_transfom = anova_one_way1_snake_transform$residuals
+
+```
+### For Kolmogorov-Smirnov test
+# Ho: Data is normal
+# Ha: Data is not normal
+
+### For Bartlett test of homogeneity of variances
+# Ho: Equal variences
+# Ha: Unequal variences
+
+```{r}
+ks.test(Population,res_snake_transfom)
+bartlett.test(anova_one_way1_snake_transform$residuals~Population)
+```
+Even for the transformed data, the p value remains same and do not meet the assumptions of normality and variences. We reject NULL and accept the alternative hypothesis.
+
+
+# Pair wise comparision for non para metric data using Dunn's Test of Multiple Comparisons Using Rank Sums
+```{r}
+library(PMCMR)
+posthoc.kruskal.dunn.test(Fat_g, Population)
+```
+Dunn's-test, the pair wise comparision reveals that only Lilos and ArmP has significant differences as the p value is less than the threshold.
+
+# Non-Parametric Analogs.
+# Kruskal-Wallis test instead of one-way ANOVA.
+# It is used when assumptions of one way ANOVA are not met.
+# However, when using the Kruskal-Wallis Test, we do not have to make any of these assumptions.
+# But,like most non-parametric tests, the Kruskal-Wallis Test is not as powerful as the ANOVA.
+```{r}
+
+# Ho: The samples (groups) have significant differences.
+# Ha: At least one of the samples (groups) comes from a different population than the others and show no significant differences.
+kruskal.test(Fat_g~Population,data=snake)
+
+```
+Here, we reject the NULL hypothesis and accpet alternative hypothesis. As the p-value is less than the significance level 0.05, we can conclude that there are significant differences between all the five samples.
+
+
+
+```{r}
+## Data Visualization
+stripchart(Fat_g~Population, method = "jitter")
+stripchart(anova_one_way1_snake$residuals~Population, method = "jitter")
+stripchart(anova_one_way1_snake_transform$residuals~Population, method = "jitter")
+
+
+```
+From the above analysis, it can be concluded that threre are signifcant differences among the five samples.
+
+
+
+
+### Question 4
+
+## Hypothesis Testing
+## Ho: Equal means among the species
+## Ha: Atleast one difference among the spcecies
+
+```{r}
+setwd("D:/Spring 2020/Biometry/Assignments/Homework_02")
+trees = read.csv("trees.csv")
+attach(trees)
+summary(trees)
+levels(trees$SPP) 
+
+```
+### 
+
+```{r}
+xbar <- tapply(Cells,SPP,mean)
+s <- tapply(Cells,SPP, sd)
+n <- tapply(Cells,SPP,length)
+sem <- s/sqrt(n)
+
+
+stripchart(Cells ~ SPP, vertical = T, pch = 19, data=sugar,xlab = "SPP (Species)", ylab = "Number of cells", method = "jitter", jitter = 0.004)
+arrows(1:5,xbar+sem,1:5,xbar-sem,angle=90,code=3,length=.1)
+#lines(1:5,xbar,pch=4,type="b",cex=2)
+
+xval<-barplot(xbar,ylim=c(0,20), xlab = "SPP (Species)", ylab = "Ocular Units")
+arrows(xval,xbar+sem,xval,xbar-sem,angle=90,code=3,length=.1)       
+
+
+
+library(ggplot2)
+ggplot(trees, aes(x = SPP, y = Cells, fill = SPP)) + geom_boxplot() + geom_jitter(shape = 15,color = "steelblue",position = position_jitter(0.21)) + theme_classic()
+
+```
+Here, the numbers of cells for the Oak species are higher than Mahogany and Teak.
+
+### Performing ANOVA test on the data
+```{r}
+rcf.lm.tree<-lm(Cells ~ SPP)
+one.way.anova_trees = anova(rcf.lm.tree)
+one.way.anova_trees
+
+anova_one_way1_trees <- aov(trees$Cells~trees$SPP)
+anova_one_way1_trees
+
+res_tree = anova_one_way1_trees$residuals
+
+```
+### Testing assumptions
+### Shapiro - Normality testing
+
+# Ho: Data is normal
+# Ha: Data is not normal
+
+### Bartlett - Variances testing
+# Ho: Variences are equal
+# Ha: Unequal variences
+
+
+```{r}
+shapiro.test(anova_one_way1_trees$residuals)
+bartlett.test(anova_one_way1_trees$residuals~SPP)
+
+```
+Here, the p value for Shapiro and Bartlett is smaller than the threshold value ( p=0.05) and we reject the NULL hupothesis in both the tests
+
+
+### Transforming data,performing ANOVA and testing assumptions
+```{r}
+rcf.lm.trees_transform<-lm(log10(Cells+1) ~ SPP)
+one.way.anova_trees_transform = anova(rcf.lm.trees_transform)
+one.way.anova_snake_transform
+
+anova_one_way1_trees_transform <- aov(log10(Cells+1)~SPP)
+anova_one_way1_trees_transform
+
+res_trees_transfom = anova_one_way1_trees_transform$residuals
+
+
+shapiro.test(anova_one_way1_trees_transform$residuals)
+bartlett.test(anova_one_way1_trees_transform$residuals~SPP)
+```
+Here, we reject the NULL Hypothesis, which indicates that the data is not normal. But, we accept the NULL hypothesis in Bartlett test, which indicates that variences are equal
+
+### Retrieving residuals from the transformed data
+
+
+```{r}
+res_trees_transform = anova_one_way1_trees_transform$residuals
+
+# Diagnostics plots
+qqnorm(anova_one_way1_trees_transform$residuals)
+opar<-par(mfrow=c(2,2), mex=0.6,
+mar=c(4,4,3,2)+0.3)
+plot(rcf.lm, which=1:4)
+par(opar)
+```
+
+```{r}
+## Pair wise comparision
+TukeyHSD(anova_one_way1_trees)
+
+TukeyHSD(anova_one_way1_trees_transform)
+
+boxplot(TukeyHSD(anova_one_way1_trees))
+
+boxplot(TukeyHSD(anova_one_way1_trees_transform))
+```
+Looking at the last column, the significant differences to be reported in the present test is between the means of the groups : For non transformed data and transformed data.
+All the pair wise comparisions have significant differenct differences as the p value is lower than threshod value.
+
+
+```{r}
+
+stripchart(Cells~SPP, method = "jitter",col = c("red","green","cyan"))
+stripchart(anova_one_way1_trees$residuals~SPP, method = "jitter",col = c("red","green","cyan"))
+stripchart(anova_one_way1_trees_transform$residuals~SPP, method = "jitter",col = c("red","green","cyan"))
+
+```
+Conclusin:
+Here, the numbers of cells are related to the wood density. Higher the number of cells for particular species, larger the wood density.SO, Oak species has the highest wood density and the Teak has the lowest.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
