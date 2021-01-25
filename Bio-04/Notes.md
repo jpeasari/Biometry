@@ -1,1 +1,1 @@
-# Two way anaova
+# Model I and Model III Anova
