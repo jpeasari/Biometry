@@ -1,0 +1,83 @@
+---
+title: "Biometry-06"
+author: "John Reddy Peasari"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Setting working directory
+```{r}
+dir <- getwd()
+setwd(dir)
+```
+
+## Question 1: 
+In the paper by Pringle et al., what was the main biological question that the authors addressed? What was the experimental design they used, and why does it fit the question? Finally, what was the statistical model they used for their analysis? 
+
+In the present paper, the authors would like to illustrate how the mechanism of indirect effects are
+promoted by the large herbivores which will have long term effects on the ecological community structure and function. Here, the authors study the effects of unglates (a hoofed mammal) on various taxa. 
+The experimental design can be considered as a block design (with six plots (replications).Initially, the authors quantified direct and indirect effects of mammals using six pairs of herbivore-exclusion and control plots ("exclosure","control, which has herbivore") with exclousure plots consiting of
+2.4-m-high electric fences. Meaning, exclosure plots are devoid of herbivore.Three plots are located on the  volcanic clay vertosols,which are highly productive and other three are located on sandy loams which are variable in procuvtivity. The experiment is set up in such a way that, they want to analyze the total abundancy rather only herbivore effect. 
+
+The statistical tests that authors employed are ANOVA and the linear regression.They tested the effects of the experimental treatment (herbivore-exclusion) using ANOVA to analyze total abundance and examined most abundant tetrapods order using multivariant ANOVA with treatment and block as factors.The article implemented linear regression to establish a relationship between productivity and the strength of the treatments effect.
+
+
+## Question 2 
+
+A geneticist collected data on the codon bias index (CBI), a measure of the nonrandom use of synonymous codons from genes in Drosophila melanogaster. The groups are three chromosomes, and the subgroups are small regions within each chromosome. Each observation is the CBI value for a single gene in that chromosome region, and there were several genes per region. Are there different cbi’s among regions and chromosomes?  
+	
+## Loading and analyzing the data
+```{r}
+file = read.csv("hw6.csv")
+```
+After loading the data file, it is observed that the dataset has three columns. Every column is a factor expect the cbi column. Which is a response variable in this case. Mutation column has only one level. The design is not balanced (there are a different number of levels with in the chromosome and region column). Region has 6 and chromosome has 3 levels.The nonrandom use of synonymous codons (codon bias) is a well-established phenomenon in Drosophila.
+ 
+
+```{r include=FALSE}
+#attach(file)
+summary(file)
+str(file)
+```
+It is obeserved that data is collected on the codon bias index(cbi), which is eventually used as a measure of non random use of synonymous codons from the gens in Drosophila melanogaster.Here the groups are three chromosomes and the subgroups are small regions within each chromosome. We are intrested in the cbi values which could eventually used to measure synonymous codons in random manner and levels of codon bias differ among genes.CBI estimates the codon bias for each gene rather than for individual codons, so the relative codon biases of different genes can be compared.
+
+After looking and analyzing the data, it can be inferred that the most appropriate design is a nested design. A nested ANOVA is a design that can account for a factor that is nested within another factor
+Here in this nested design, the top level hierarchy is the chromosome which is a fixed effect and followed by region and mutations. Mutations with in the regions will be closely related  than from the various regions.
+
+
+## Stating hypothesis:
+
+A nested anova has one null hypothesis for each level however,nested factors are typically only added to absorb some of the unexplained variability and thus,speciﬁc hypotheses tests associated with nested factors are of lesser biological importance (Logan at.el).
+ 
+Ho1: The groups has the same mean. The mean of population 1 is equal to that of population 2 and so on, and thus all population means are equal to an overall mean.
+
+H02: The population group means of region (within chromosome) are all equal
+
+Ha1: The groups has different mean.
+
+
+Ha2: The population group means of region (within chromosome) are all not equal
+
+As the mutation is at the lowest level in the hierarchy, we should not include in the anova calculation (Biometry Lab).
+
+## Nested ANOVA Calculation
+
+```{r}
+nested.anova = aov(cbi~chromosome/region,data = file) 
+summary(nested.anova)
+```
+From the anova table, it can be observed that chromosome is not significant and region within the chromosome is significant. But it is innappropriate to consider the F ratio of the chromosome. So we have to manually calculate the F statistics and the p value.
+
+
+```{r}
+chromosome.F.value = 0.00516/.05432
+chromosome.F.value
+chromosome.p.value = pf(chromosome.F.value,2,3,lower.tail=F)
+chromosome.p.value
+
+```
+## Conclusion
+After calculating the F ratio and p value, it can be inferred that the there is no significant diffrence between the means of the chromosomes, having a new F value of 0.09499264 and p value of 0.9120085. But, it can be concluded that there is atleast one significant difference between cbi values within the regions of the chromosomes.I fail to reject the second NULL hypothesis and accept that the population group means of region (within chromosome) are all not equal. They are differences. 
