@@ -1,0 +1,263 @@
+---
+title: "Biometry-08"
+author: "John Reddy Peasari"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Setting working directory
+```{r}
+dir <- getwd()
+setwd(dir)
+```
+
+## Question 1
+A marine biologist is interested on how the protein level in the diets of sea urchins affects growth. He maintained urchins in diets that were either low or high in protein content, as well as those individuals that occurred in the wild (reference). He randomly assigned 24 individuals, all the same age, to each of the three treatments. After three months he measured the suture length (IV) and suture width (SUTW) to determine growth. Perform a single linear regression for each individual treatment. What can you conclude about the diets in relation to growth? 
+
+## Looking at the complete dataset at once
+```{r}
+all.diet = read.csv("All_Diet.csv")
+```
+
+After, loading the dataset it can be observed that, there are three columns (DIET,IV and STUW). DIET coulmn has catogorical values and rest two comulms are numerical. For simplicity purpose, I have divided the dataset into 3 parts, based on the DIET treatment and performed statistical test individually.
+
+
+## Stating hypothesis
+
+## Ho: Suture length (IV) and suture width (SUTW) are not correlated and there is no effect by the consumption protein content in diet on the growth of Sea Urchins
+## Ha: Suture length (IV) and suture width (SUTW) are correlated and there is an effect by the consumption of protein content diet on the growth of Sea Urchins
+
+# In order to determine the realtionship between Suture length (IV) and suture width (SUTW) in Sea Urchins, the most appropriate statistical test is the linear refression.
+
+```{r}
+cor(all.diet[,2:3])
+cor.test(all.diet$IV, all.diet$SUTW, method = "spearman")
+```
+It can seen that, Suture length (IV) vs Suture width (SUTW) are poitively correlated having a 
+Pearson’s product moment value of 0.3461423. Similarly, pearman's rank correlation gave p value of 
+5e-04 and rho 0.3999448 indicating positive correlation between them.
+
+```{r include=FALSE}
+high.diet = read.csv("High_Diet.csv")
+low.diet = read.csv("Low_Diet.csv")
+reference.diet = read.csv("Reference_Diet.csv")
+
+```
+
+
+
+```{r}
+plot(high.diet$IV ~ high.diet$SUTW, col = "red", ylim = c(0,50), xlab="SUTW",ylab="IV",
+     main = "Suture length (IV) vs Suture width (SUTW)")
+points(low.diet$IV ~ low.diet$SUTW, col = "green")
+points(reference.diet$IV ~ reference.diet$SUTW, col = "cyan")
+
+```
+
+Looking the the combined plot of high, it can be observed that in all the three diets length and width are increasing positively and might have a correlation between IV and SUTW. This inference can be tested by suitble statistical test further.
+
+
+
+## Performing regression on High Diet
+```{r}
+high.diet = read.csv("High_Diet.csv")
+```
+
+```{r include=FALSE}
+attach(high.diet)
+
+```
+
+
+```{r}
+cor(high.diet[,2:3])
+```
+
+```{r}
+# Determine significance of our correlation
+cor.test(high.diet$IV, high.diet$SUTW, method = "spearman")
+```
+
+```{r}
+cor.test(high.diet$IV, high.diet$SUTW, method = "kendall")
+```
+
+```{r}
+high.diet.lm <- lm(high.diet$IV ~ high.diet$SUTW)
+summary(high.diet.lm)
+```
+
+
+```{r}
+# Displaying  and Confidence Intervals 
+high.diet.pred.dataframe <- data.frame(SUTW)
+pp <- predict(high.diet.lm,int="p",newdata=high.diet.pred.dataframe)
+pc <- predict(high.diet.lm,int="c",newdata=high.diet.pred.dataframe)
+```
+
+
+
+```{r}
+# create prediction and confidence intervals from evenly spaced x-axis values 
+plot(IV ~ SUTW, main = "High Protein Diet",ylim = range(IV,pp))
+pred.SUTW <- high.diet.pred.dataframe$SUTW
+matlines(pred.SUTW, pc,lty=c(1,2,2),col = "black")
+matlines(pred.SUTW, pp,lty=c(1,2,2),col = "blue")
+
+```
+
+## Result 1:
+
+After performing correlation test and regression test for the high protein diet alone, it can be inferred that the slope is having a value of 125.045 with intercept 5.975 and t value (t test)of 2.781.I can be noticed that the slope is significantly diferent from zero with a proability value of 0.0109. Hence, we fail to accept the NULL hypothesis. Linear refression generated multiple R-squared value of 0.2601, which illustrated that there might be little tight correlation between suture length (IV) and suture width (SUTW). Aslo, correlation tests ( "spearman ", "kendall" ) displayed a positive correlations of 0.5553533  and 0.4217656 along with significant p- values (0.004845 and 0.005729). Therefore, we fail to accept the NULL hypothesis and say that  suture length (IV) and 
+suture width (SUTW) are correlated in sea urchins with reference to the high protein content diet.
+
+
+
+## Performing regression on Low Diet
+
+```{r}
+low.diet = read.csv("Low_Diet.csv")
+```
+
+
+```{r include=FALSE}
+attach(low.diet)
+detach(low.diet)
+```
+
+```{r}
+cor(low.diet[,2:3])
+```
+
+```{r}
+# Determine significance of our correlation
+cor.test(low.diet$IV, low.diet$SUTW, method = "spearman")
+```
+
+
+```{r}
+cor.test(low.diet$IV, low.diet$SUTW, method = "kendall")
+```
+
+
+```{r}
+low.diet.lm <- lm(low.diet$IV ~ low.diet$SUTW)
+summary(low.diet.lm)
+```
+
+
+```{r}
+# Displaying  and Confidence Intervals
+low.diet.pred.dataframe <- data.frame(SUTW)
+pp <- predict(low.diet.lm,int="p",newdata=low.diet.pred.dataframe)
+pc <- predict(low.diet.lm,int="c",newdata=low.diet.pred.dataframe)
+
+# create prediction and confidence intervals from evenly spaced x-axis values
+plot(IV ~ SUTW, main = "Low Protein Diet",ylim = range(IV,pp))
+pred.SUTW <- low.diet.pred.dataframe$SUTW
+matlines(pred.SUTW, pc,lty=c(1,3,2),col = "black")
+matlines(pred.SUTW, pp,lty=c(1,2,2),col = "blue")
+
+```
+
+## Result 2:
+
+After performing correlation test and regression test for the high protein diet alone, it can be inferred that the slope is having a value of 326.719 with intercept 2.091  and t value (t test)of 2.236. I can be noticed that the slope is significantly diferent from zero with a proability value of 0.0109. Hence, we fail to accept the NULL hypothesis. Linear refression generated multiple R-squared value of  0.1852, which illustrated that there is not much tight correlation between suture length (IV) and suture width (SUTW). Aslo, correlation tests ( "spearman ", "kendall" ) displayed a positive correlations of 0.4123286 and  0.3228095 along with barely significant p- values (0.04526 and 0.04149). Therefore, we fail to accept the NULL hypothesis and say that suture length (IV) and suture width (SUTW) are correlated in sea urchins with reference to the low protein content diet.
+
+
+
+## Performing regression on reference Diet
+```{r}
+reference.diet = read.csv("Reference_Diet.csv")
+```
+
+```{r include=F}
+attach(reference.diet)
+#detach(reference.diet)
+```
+
+```{r}
+cor(reference.diet[,2:3])
+```
+
+
+```{r}
+# Determine significance of our correlation
+cor.test(reference.diet$IV, reference.diet$SUTW, method = "spearman")
+```
+
+
+```{r}
+cor.test(reference.diet$IV, reference.diet$SUTW, method = "kendall")
+```
+
+
+
+```{r}
+reference.diet.lm <- lm(reference.diet$IV ~ reference.diet$SUTW)
+summary(reference.diet.lm)
+```
+
+
+```{r}
+# Displaying  and Confidence Intervals
+reference.diet.pred.dataframe <- data.frame(SUTW)
+pp <- predict(reference.diet.lm,int="p",newdata=reference.diet.pred.dataframe)
+pc <- predict(reference.diet.lm,int="c",newdata=reference.diet.pred.dataframe)
+
+```
+
+
+```{r}
+# create prediction and confidence intervals from evenly spaced x-axis values
+plot(IV ~ SUTW, main = "Reference Protein Diet",ylim = range(IV,pp))
+pred.SUTW <- reference.diet.pred.dataframe$SUTW
+matlines(pred.SUTW, pc,lty=c(1,2,2),col = "black")
+matlines(pred.SUTW, pp,lty=c(1,2,2),col = "blue")
+
+```
+
+
+## Result 3:
+
+After performing correlation test and regression test for the high protein diet alone, it can be inferred that the slope is having a value of 300.071  with intercept 1.587 and t value (t test) of 4.386. It can be noticed that the slope is significantly different from zero with a proability value of 0.000235. Hence, we fail to accept the NULL hypothesis. Linear refression generated multiple R-squared value of  0.4665, which illustrated that there is not much tight correlation between suture length (IV) and suture width (SUTW). Aslo, correlation tests ( "spearman ", "kendall" ) displayed a positive correlations of 0.6555566  and  0.5108286  along with highly significant p- values (0.0005062 and  0.0008376). Therefore, we fail to accept the NULL hypothesis and say that the suture length (IV) and suture width (SUTW) are correlated in sea urchins in relation to the reference or wild-type protein diet.
+
+### Conclusion
+
+In conclusion, it can be inferred that that high, low and reference protein diets had correlation values of 0.5099979,  0.4303512 and 0.68301 indicating  positive correlation between IV and SUTW. This indicates that the reference diet is more correlated when in comparision to the high and low protein content diet.Even, it is observed that multiple r square values for high,low and reference diets as 0.2601,0.1852, 0.46, which indicates that reference diet has more correlation. All the p-values corresponding to the slope in each diet are significant. Finally, we can conclude that the suture length (IV) and suture width (SUTW) are correlated and accpet the alternative hypothesis that there is an effect of diet on the growth of Sea Urchins.
+
+
+
+
+
+```{r}
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
