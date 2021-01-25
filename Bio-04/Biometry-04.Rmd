@@ -1,0 +1,195 @@
+---
+title: "Biometry-04"
+author: "John Reddy Peasari"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Setting working directory
+```{r}
+dir <- getwd()
+setwd(dir)
+```
+
+
+## Loading the data
+```{r}
+data = read.csv("cyp.csv")
+# summary(data)
+# str(data)
+
+
+```
+The dataset that we will be using consist of  three column  ( species,location and entrance.w). In different terms, we can say that the following analysis is a 2 (species: C. kentuckiense & C. reginae) x 2 (location: North	Fork & Big Turn) between-subjects two-way ANOVA. We can say that it is a two way ANOVA due to the fact that there are 2 independent variables. Here we will study how the orchid "selects" bees by the size of the entrance of the modified petal at two didderent locations. The entrance.w column in the dataset is a response variable. We can say that the design is completely balanced and each factor has 2 levels.
+
+
+Initially, we will peform two way ANOVA consedering both the factor ( species and location) as fixed factor. Hence, the interaction between these factors will be fixed. As we are assuming both factors as fixed, Model I ANOVA seems to be the most appropriate test to conduct.
+
+### Analyzing the dataset
+
+```{r include=FALSE}
+library(ggpubr)
+```
+
+
+```{r}
+ggboxplot(data, x = "location", y = "entrance.w", color = "species",palette = c("#00AFBB", "#E7B800"))
+
+
+```
+After looking at the boxplot, it can be inferred that the size of the petal is higher in C. kentuckiense than in C. reginae in Big.Turn location. Whereas the size of the petal has no larger deviation in both species at North.Fork location. The entrance size is almost same at both locations in C. kentuckiense species.
+
+# Stating Hypothesis
+
+## H01: There is no difference in the means of factor species
+## H01: There is no difference in the means of factor location
+## H01: There is no interaction between factors species and  location
+
+
+## Ha1: There is a difference in the means of factor species
+## Ha1: There is a difference in the means of factor location
+## Ha1: There is an interaction between factors species and  location
+
+```{r include=FALSE}
+# boxplot(entrance.w~species,data)
+# boxplot(entrance.w~location,data)
+# boxplot(entrance.w~species*location,data, col = c("red","green"))
+
+```
+ 
+ 
+```{r}
+### Performing ANOVA with interaction effect
+cyp.anova_model_1 = aov(data$entrance.w~data$species*data$location)
+
+```
+# Assumption testing
+## Normality test
+### Ho: Normal data
+### Ha: Not normal data
+```{r}
+res = cyp.anova_model_1$residuals ### Extracting residuals 
+
+plot(cyp.anova_model_1, 2)
+shapiro.test(cyp.anova_model_1$residuals) 
+```
+Q-Q plot clearly revels that, almost all the data points are lying on the diagonal line indicating the data normality. The Shapiro test gives p values of 0.9081, suggesting that the distribution of the data are not significantly different from the normal distribution. We assume normality.
+
+# Homogeneity of Variance
+## Ho: Equal variences
+## Ha: Unequal variences
+
+```{r include=FALSE}
+library(car)
+```
+
+
+```{r}
+leveneTest(entrance.w~species*location, data = data)
+plot(cyp.anova_model_1, 1)
+```
+
+```{r}
+summary(cyp.anova_model_1)
+```
+
+Levenes test and the residual plot revaled that, the variecnes are equal. The p value (0.8461) is greater than the threshold. Hence, we fail to reject the NULL hypothesis, which suggests equal variences.
+
+The raw data does pass tests for the equality of variance assumption and normality assumption. There is no need to transform the raw data. Thus, We can proceed further to analyze the ANOVA results.
+
+Model I ANOVA table indicates that, the main effects  and the interaction effect has significant differences.
+From the ANOVA results, you can conclude the following, based on the p-values and a significance level of 0.05:
+1.The p-value of species is  0.000556 (significant), which indicates that the levels of species are associated with significant entrance size.
+2.The p-value of location is  0.001929 (significant), which indicates that the levels of location are associated with significant entrance size.
+3.The p-value for the interaction between species*location is 0.000237 (significant), which indicates that the relationships between species and location depends on the entrance size of the petal.
+
+In ANOVA test, a significant p-value indicates that some of the group means are different, but we don’t know which pairs of groups are different.TO determine the specific significant differences between the factors and the levels we can perform Tukey test generally . But, as the degrees of freedom are equal to one in the data, we cannot perform TUkey test to analyze pairwise comparisions (from biometry lab lecture).
+
+
+
+
+
+Next, we will peform two way ANOVA consedering species as fixed factor and location as random factor. Hence, the interaction between these factors will be random. As we are assuming one factor as fixed and other as random, Model III ANOVA seems to be the most appropriate test to conduct.
+
+
+
+```{r}
+## performing model III ANOVA with interaction effect (Random)
+library(lme4)
+library(Matrix)
+
+
+## Reference: Lab 7 slides
+cyp_mpdel_III_lmer<-lmer(entrance.w~location*species + (1|location),data=data)
+anova(cyp_mpdel_III_lmer)
+
+```
+Here, (1 | location) specifies that the location factor is a random factor. As the ANOVA (Model III) table doesn't give p values with respect to the F statistics.So, I calculated p values from corresponding F value in mixed effect ANOVA with help of F-distribution function. The observed F-value that is obtained from the ANOVA table, and the two degrees of freedom.  The function 'pf' will calculate the cummulative probability of a given F-value (x), thus we will need to substract that from 1.
+
+1 - pf(x, df1, df2)
+# Reference: From blackboard
+
+## Calculate the p-value for 'lmer' output
+
+```{r}
+
+1-pf(12.9957,1,1)
+
+1-pf(0.7837,1,1)
+
+1-pf(14.8899,1,1) 
+
+```
+p value for the species factor is : 0.1722645
+p value for the location factor is : 0.538695
+p value for the interaction effect (species*location) is :  0.1614298
+
+Model III clearly shows that, both main effects (species and location) and the random interactin effect are not significantly different
+ 
+ 
+## Conclusions:
+ 
+After analyzing the results from both anova tables (Model I and Model III) I don't find any valid similarities to report.
+Rather, the two anova showed completely different results. In model I ANOVA all the factors along with the interaction effect are significant. But, in model III all the factors showed no significant difference including interaction effect.
+Without performing pair wise comparisions we cannot really know how/which pairs of groups are diffrent.
+
+To my knowledge, these differences can be attributed to the independece nature of factors and poor experimatal design.
+Independence between the variables in an important assumption to consider. More imporatantly, the biological question can be deduced as such  1) petal size varies with the type of bees, and 2) that the type of bees may varies with respect to location
+
+Once possible approach to deal with this kind of problem is that, first we can test effect of location on petal size, consedering one species at a time.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
